@@ -28,28 +28,20 @@ namespace Calculator
 
         private IEnumerable<string> FilterNumbers(IEnumerable<string> splitedString)
         {
-            var negatives = new List<string>();
+            var filters = new IStringFilter[] {new NegativeStringFilter(), new MoreThanThreeFilter(), };
 
             foreach (var tmp in splitedString)
             {
-                if (tmp.StartsWith("-"))
+                var passedAllFilters = filters.All(x => !x.Filter(tmp));
+                if (passedAllFilters)
                 {
-                    negatives.Add(tmp);
-                    
-                    continue;
+                    yield return tmp;
                 }
-
-                if (tmp.Length > 3)
-                {
-                    continue;
-                }
-
-                yield return tmp;
             }
 
-            if (negatives.Count > 0)
+            foreach (var stringFilter in filters)
             {
-                throw new Exception("negatives not allowed: " + string.Join(",", negatives));
+                stringFilter.Complete();
             }
         }
 
@@ -80,6 +72,57 @@ namespace Calculator
             
             return numbers.Split(separator, StringSplitOptions.RemoveEmptyEntries);
         }
+
+        private interface IStringFilter
+        {
+            bool Filter(string s);
+
+            void Complete();
+        }
+
+        private class NegativeStringFilter : IStringFilter
+        {
+            private readonly List<string> _negatives = new List<string>();
+
+            public bool Filter(string s)
+            {
+                if (s.StartsWith("-"))
+                {
+                    _negatives.Add(s);
+
+                    return true;
+                }
+
+                return false;
+            }
+
+            public void Complete()
+            {
+                if (_negatives.Count > 0)
+                {
+                    throw new Exception("negatives not allowed: " + string.Join(",", _negatives));
+                }
+            }
+        }
+
+        private class MoreThanThreeFilter : IStringFilter
+        {
+            public bool Filter(string s)
+            {
+                if (s.Length > 3)
+                {
+                    return true;
+                }
+
+                return false;
+            }
+
+            public void Complete()
+            {
+
+            }
+        }
+
     }
 
     public class TestStringCalculator
