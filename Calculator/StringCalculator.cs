@@ -14,26 +14,43 @@ namespace Calculator
         {
             var splitedString = SplitStringToNumbers(numbers);
 
-            var negatives = new List<int>();
+            splitedString = FilterNumbers(splitedString);
 
             var sum = splitedString.Aggregate(0, (i, s) =>
             {
                 var tmp = ParseNumber(s);
 
-                if (tmp < 0)
-                {
-                    negatives.Add(tmp);
-                }
-
                 return tmp + i;
             });
+
+            return sum;
+        }
+
+        private IEnumerable<string> FilterNumbers(IEnumerable<string> splitedString)
+        {
+            var negatives = new List<string>();
+
+            foreach (var tmp in splitedString)
+            {
+                if (tmp.StartsWith("-"))
+                {
+                    negatives.Add(tmp);
+                    
+                    continue;
+                }
+
+                if (tmp.Length > 3)
+                {
+                    continue;
+                }
+
+                yield return tmp;
+            }
 
             if (negatives.Count > 0)
             {
                 throw new Exception("negatives not allowed: " + string.Join(",", negatives));
             }
-
-            return sum;
         }
 
         private int ParseNumber(string s)
@@ -41,15 +58,11 @@ namespace Calculator
             int tmp;
             int.TryParse(s, out tmp);
 
-            if (tmp > 1000)
-            {
-                tmp = 0;
-            }
 
             return tmp;
         }
 
-        private static string[] SplitStringToNumbers(string numbers)
+        private static IEnumerable<string> SplitStringToNumbers(string numbers)
         {
             var regex = new Regex(@"^//(?:\[?(?<delimiter>[^\[\]]+)\]?)+\n(?<numbers>.*)");
 
